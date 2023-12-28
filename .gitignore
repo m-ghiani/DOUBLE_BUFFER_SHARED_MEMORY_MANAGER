@@ -162,3 +162,4 @@ cython_debug/
 .vscode/*
 double_buffer_shared_memory_manager_package/setup.py
 double_buffer_shared_memory_manager_package/README.rst
+double_buffer_shared_memory_manager_package/double_buffer_shared_memory/tests

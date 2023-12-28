@@ -25,7 +25,6 @@ class DoubleBufferedSharedMemoryManager:
         __str__: Returns a string representation of the object.
         __int__: Returns the size of the shared memory.
         __len__: Returns the total size in bytes of the ndarray.
-        __switch: Switches the active buffer index to the other buffer (internal use).
         __getitem__: Reads the entire buffer from the non-active shared memory and returns it as an ndarray.
         __setitem__: Writes the entire ndarray to the active shared memory.
         __enter__: Context management protocol - returns itself as a context manager.
@@ -45,7 +44,7 @@ class DoubleBufferedSharedMemoryManager:
     __author__ = "Massimo Ghiani <m.ghiani@gmail.com>"
     __status__ = "production"
     # The following module attributes are no longer updated.
-    __version__ = "1.0.0"
+    __version__ = "1.0.2"
     __date__ = "27 December 2023"
     __maintainer__ = "Massimo Ghiani <m.ghiani@gmail.com>"
 
@@ -134,7 +133,9 @@ class DoubleBufferedSharedMemoryManager:
                     self.buffers.append(shm)
                     shm_created = True
             except FileNotFoundError:
-                self.__logger.info(f"No existing shared memory block found with name {name}.")
+                self.__logger.info(
+                    f"No existing shared memory block found with name {name}."
+                )
             except Exception as e:
                 self.__logger.error(f"Error accessing shared memory block {name}: {e}")
 
@@ -206,14 +207,6 @@ class DoubleBufferedSharedMemoryManager:
         """
         return self.size
 
-    def __switch(self):
-        """
-        Switches the active buffer index to the other buffer.
-        This method is intended for internal use only.
-        """
-        with self.__lock.gen_wlock():
-            self.active_index = 1 - self.active_index
-
     def __getitem__(self, _):
         """
         Reads the entire buffer from the non-active shared memory and returns it as an ndarray.
@@ -284,7 +277,7 @@ class DoubleBufferedSharedMemoryManager:
         with self.__lock.gen_wlock():
             data = value.tobytes()
             self.buffers[self.active_index].buf[: self.size] = data
-            self.__switch()
+            self.active_index = 1 - self.active_index
 
     def __enter__(self):
         """
@@ -330,4 +323,9 @@ class DoubleBufferedSharedMemoryManager:
         for buffer in self.buffers:
             buffer.close()
             if buffer.name:
-                buffer.unlink()
+                try:
+                    buffer.unlink()
+                except FileNotFoundError:
+                    self.__logger.warning(
+                        LogMessages.SHARED_MEMORY_NOT_FOUND_SKIPPING.format(buffer.name)
+                    )

@@ -11,3 +11,4 @@ class LogMessages:
     WRONG_DATA_SIZE = "Value size mismatch: expected {} bytes, got {} bytes."
     WRONG_DATA_SHAPE = "Value shape mismatch: expected {}, got {}."
     WRONG_DATA_DTYPE = "Value dtype mismatch: expected {}, got {}."
+    SHARED_MEMORY_NOT_FOUND_SKIPPING = "Shared memory block {} not found, skipping..."
